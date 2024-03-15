@@ -56,6 +56,17 @@ app.listen(PORT, () => {
     return res.send(mockUsers);
   });
 
+  app.delete("/api/users", (req, res) => {
+    const { username } = req.body;
+
+    const userIndex = mockUsers.findIndex((user) => username === user.username);
+
+    if (userIndex === -1) return res.sendStatus(404);
+
+    mockUsers.splice(userIndex, 1);
+    return res.sendStatus(200);
+  });
+
   app.post("/api/users", (req, res) => {
     const { username } = req.body;
     const userFound = mockUsers.find((user) => user.username === username);
