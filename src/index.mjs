@@ -14,14 +14,17 @@ app.listen(PORT, () => {
   const mockUsers = [
     {
       id: uuid(),
+      username: "abse",
       name: "abse adel",
     },
     {
       id: uuid(),
+      username: "anas",
       name: "anas",
     },
     {
       id: uuid(),
+      username: "ahmed",
       name: "ahmed",
     },
   ];
@@ -31,7 +34,15 @@ app.listen(PORT, () => {
   });
 
   app.get("/api/users", (req, res) => {
-    console.log(req.query);
+    const { username } = req.body;
+
+    const userFound = mockUsers.find((user) => user.username === username);
+
+    if (!userFound && username)
+      return res.status(404).send({ Message: "Username does not exists" });
+
+    if (userFound && username) return res.send(userFound.id);
+
     const { filter, value } = req.query;
 
     if (filter && value)
@@ -46,6 +57,10 @@ app.listen(PORT, () => {
   });
 
   app.post("/api/users", (req, res) => {
+    const { username } = req.body;
+    const userFound = mockUsers.find((user) => user.username === username);
+    if (userFound)
+      return res.status(409).send({ Message: "Username already exisits" });
     console.log(req.body);
     const { body } = req;
     const newUser = { id: uuid(), ...body };
@@ -77,6 +92,10 @@ app.listen(PORT, () => {
   });
 
   app.put("/api/users/:id", (req, res) => {
+    const { username } = req.body;
+    const userFound = mockUsers.find((user) => user.username === username);
+    if (userFound)
+      return res.status(409).send({ Message: "Username already exisits" });
     const {
       body,
       params: { id },
@@ -89,6 +108,10 @@ app.listen(PORT, () => {
   });
 
   app.patch("/api/users/:id", (req, res) => {
+    const { username } = req.body;
+    const userFound = mockUsers.find((user) => user.username === username);
+    if (userFound)
+      return res.status(409).send({ Message: "Username already exisits" });
     const {
       body,
       params: { id },
