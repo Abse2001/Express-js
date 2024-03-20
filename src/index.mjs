@@ -83,13 +83,23 @@ app.listen(PORT, () => {
 
   app.post(
     "/api/users",
-    body("username").notEmpty().withMessage("Username is required"),
+    body("username")
+      .notEmpty()
+      .withMessage("Username is required")
+      .isString()
+      .withMessage("Username must be a string"),
     duplicateUserMiddleware,
     (req, res) => {
       const { body } = req;
       const queryErrors = validationResult(req).errors;
-      if (queryErrors.length > 0)
-        return res.status(400).send({ msg: queryErrors[0].msg });
+      console.log(queryErrors);
+      if (queryErrors.length > 0) {
+        let errorMessage = "";
+        for (let i = 0; i < queryErrors.length; i++) {
+          errorMessage += queryErrors[i].msg + " ";
+        }
+        return res.status(400).send(errorMessage);
+      }
       const newUser = { id: uuid(), ...body };
       mockUsers.push(newUser);
       return res.status(201).send(newUser);
@@ -119,17 +129,24 @@ app.listen(PORT, () => {
   app.put(
     "/api/users/:id",
     duplicateUserMiddleware,
-    body("username").notEmpty().withMessage("Username is required"),
+    body("username")
+      .notEmpty()
+      .withMessage("Username is required")
+      .isString()
+      .withMessage("Username most be a string"),
     (req, res) => {
       const {
         body,
         params: { id },
       } = req;
       const queryErrors = validationResult(req).errors;
-      if (queryErrors.length > 0)
-        return res.status(400).send({ msg: queryErrors[0].msg });
-      if (body.username === undefined)
-        return res.status(400).send({ msg: "Username is required" });
+      if (queryErrors.length > 0) {
+        let errorMessage = "";
+        for (let i = 0; i < queryErrors.length; i++) {
+          errorMessage += queryErrors[i].msg + " ";
+        }
+        return res.status(400).send(errorMessage);
+      }
 
       const findUserIndex = mockUsers.findIndex((user) => user.id === id);
       if (findUserIndex === -1) return res.sendStatus(404);
