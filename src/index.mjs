@@ -5,9 +5,13 @@ import mockUsers from "./utils/database.mjs";
 import products from "./routes/products.mjs";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-
+import passport from "passport";
+import "./strategies/local-stratrgy.mjs";
+import "dotenv/config";
+import mongoose from "mongoose";
+import conntectDB from "./utils/dbConnect.mjs";
 const app = express();
-
+conntectDB();
 app.use(cookieParser());
 app.use(
   session({
@@ -19,46 +23,44 @@ app.use(
     },
   })
 );
-app.use(users);
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(cookieMiddleware);
 app.use(express.json());
 app.use(loggingMiddleware);
 
+app.use(users);
 app.use(products);
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`Running on Port ${PORT}`);
+mongoose.connection.once("open", () => {
+  console.log("Connected to MongoDB");
+  app.listen(PORT, () => {
+    console.log(`Running on Port ${PORT}`);
+  });
 });
 
 app.get("/", (req, res) => {
-  console.log(req);
-  console.log(req.session);
-  console.log(req.session.id);
   req.session.visited = true;
   res.status(201).send({ msg: "Hello World" });
 });
 
-app.post("/api/auth", (req, res) => {
-  const {
-    body: { username, password },
-  } = req;
-
-  const findUser = mockUsers.find((user) => user.username === username);
-  if (!findUser || findUser.password !== password)
-    return res
-      .status(401)
-      .send({ msg: "User Not Found Check Your Login Info" });
-
-  req.session.user = findUser;
-  return res.status(200).send(findUser);
+app.post("/api/auth", passport.authenticate("local"), (req, res) => {
+  res.sendStatus(200);
 });
 
 app.get("/api/auth/status", (req, res) => {
-  return req.session.user
-    ? res.status(200).send(req.session.user)
-    : res.status(401).send({ msg: "User Not Found Check Your Login Info" });
+  console.log(`Inside /auth/status endpoint`);
+  return req.user ? res.send(req.user) : res.sendStatus(401);
+});
+
+app.post("/api/logout", (req, res) => {
+  if (!req.user) return response.sendStatus(401);
+  req.logout((err) => {
+    if (err) return res.sendStatus(500);
+    res.sendStatus(200);
+  });
 });
 
 app.post("/api/cart", (req, res) => {

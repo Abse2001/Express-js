@@ -2,8 +2,10 @@ import { Router } from "express";
 import { body, validationResult } from "express-validator";
 import mockUsers from "../utils/database.mjs";
 import { duplicateUserMiddleware } from "../utils/middleware.mjs";
+import User from "../schema/user.mjs";
 const router = Router();
 router.get("/api/users", (req, res) => {
+  console.log(req.body);
   const { username } = req.body;
   const userFound = mockUsers.find((user) => user.username === username);
 
@@ -23,30 +25,21 @@ router.get("/api/users", (req, res) => {
 
   return res.send(mockUsers);
 });
-router.post(
-  "/api/users",
-  body("username")
-    .notEmpty()
-    .withMessage("Username is required")
-    .isString()
-    .withMessage("Username must be a string"),
-  duplicateUserMiddleware,
-  (req, res) => {
-    const { body } = req;
-    const queryErrors = validationResult(req).errors;
-    console.log(queryErrors);
-    if (queryErrors.length > 0) {
-      let errorMessage = "";
-      for (let i = 0; i < queryErrors.length; i++) {
-        errorMessage += queryErrors[i].msg + " ";
-      }
-      return res.status(400).send(errorMessage);
-    }
-    const newUser = { id: uuid(), ...body };
-    mockUsers.push(newUser);
-    return res.status(201).send(newUser);
+router.post("/api/users", async (req, res) => {
+  const {
+    body: { username, password, displayName },
+  } = req;
+  console.log(username, password, displayName);
+  if (!username || !password || !displayName) return res.sendStatus(400);
+  const newUser = new User({ username, password, displayName });
+  try {
+    const saveUser = await newUser.save();
+    return res.status(201).send(saveUser);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send(err);
   }
-);
+});
 router.get("/api/users/:id", (req, res) => {
   const { id } = req.params;
 
