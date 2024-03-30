@@ -3,6 +3,7 @@ import { body, validationResult } from "express-validator";
 import mockUsers from "../utils/database.mjs";
 import { duplicateUserMiddleware } from "../utils/middleware.mjs";
 import User from "../schema/user.mjs";
+import { hashPasssword } from "../utils/helpers.mjs";
 const router = Router();
 router.get("/api/users", (req, res) => {
   console.log(req.body);
@@ -31,7 +32,12 @@ router.post("/api/users", async (req, res) => {
   } = req;
   console.log(username, password, displayName);
   if (!username || !password || !displayName) return res.sendStatus(400);
-  const newUser = new User({ username, password, displayName });
+  const passwordHashed = hashPasssword(password);
+  const newUser = new User({
+    username,
+    password: passwordHashed,
+    displayName,
+  });
   try {
     const saveUser = await newUser.save();
     return res.status(201).send(saveUser);

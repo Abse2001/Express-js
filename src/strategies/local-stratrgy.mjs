@@ -1,8 +1,8 @@
 import passport from "passport";
 import { Strategy } from "passport-local";
-import mockUsers from "../utils/database.mjs";
+// import mockUsers from "../utils/database.mjs";
 import User from "../schema/user.mjs";
-
+import { comparePassword } from "../utils/helpers.mjs";
 passport.serializeUser((user, done) => {
   console.log(`Inside Serialize User`);
   done(null, user.id);
@@ -25,7 +25,8 @@ export default passport.use(
     try {
       const findUser = await User.findOne({ username });
       if (!findUser) throw new Error("User Not Found");
-      if (findUser.password !== password) throw new Error("Wrong Password");
+      if (!comparePassword(password, findUser.password))
+        throw new Error("Wrong Password");
       done(null, findUser);
     } catch (err) {
       done(err, null);
