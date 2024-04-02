@@ -10,6 +10,7 @@ import "./strategies/local-stratrgy.mjs";
 import "dotenv/config";
 import mongoose from "mongoose";
 import conntectDB from "./utils/dbConnect.mjs";
+import MongoStore from "connect-mongo";
 const app = express();
 conntectDB();
 app.use(cookieParser());
@@ -21,6 +22,9 @@ app.use(
     cookie: {
       maxAge: 60000 * 60,
     },
+    store: MongoStore.create({
+      client: mongoose.connection.getClient(),
+    }),
   })
 );
 app.use(passport.initialize());
